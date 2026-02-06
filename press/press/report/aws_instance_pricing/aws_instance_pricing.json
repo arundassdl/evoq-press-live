@@ -1,0 +1,158 @@
+{
+ "add_total_row": 0,
+ "columns": [
+  {
+   "fieldname": "cluster",
+   "fieldtype": "Link",
+   "label": "Cluster",
+   "options": "Cluster",
+   "width": 0
+  },
+  {
+   "fieldname": "instance",
+   "fieldtype": "Data",
+   "label": "Instance",
+   "width": 200
+  },
+  {
+   "fieldname": "instance_type",
+   "fieldtype": "Data",
+   "label": "Instance Type",
+   "width": 0
+  },
+  {
+   "fieldname": "vcpu",
+   "fieldtype": "Int",
+   "label": "vCPU",
+   "width": 0
+  },
+  {
+   "fieldname": "memory",
+   "fieldtype": "Float",
+   "label": "Memory",
+   "width": 0
+  },
+  {
+   "fieldname": "processor",
+   "fieldtype": "Data",
+   "label": "Processor",
+   "width": 0
+  },
+  {
+   "fieldname": "family",
+   "fieldtype": "Data",
+   "label": "Family",
+   "width": 0
+  },
+  {
+   "fieldname": "generation",
+   "fieldtype": "Int",
+   "label": "Generation",
+   "width": 0
+  },
+  {
+   "fieldname": "is_latest_generation",
+   "fieldtype": "Check",
+   "label": "Is Latest Generation?",
+   "width": 0
+  },
+  {
+   "fieldname": "size",
+   "fieldtype": "Data",
+   "label": "Size",
+   "width": 0
+  },
+  {
+   "fieldname": "size_multiplier",
+   "fieldtype": "Float",
+   "label": "Size Multiplier",
+   "width": 0
+  },
+  {
+   "fieldname": "on_demand",
+   "fieldtype": "Float",
+   "label": "On-Demand",
+   "width": 0
+  },
+  {
+   "fieldname": "1yr_instance",
+   "fieldtype": "Float",
+   "label": "1 Year Instance",
+   "width": 0
+  },
+  {
+   "fieldname": "1yr_compute",
+   "fieldtype": "Float",
+   "label": "1 Year Compute",
+   "width": 0
+  },
+  {
+   "fieldname": "3yr_instance",
+   "fieldtype": "Float",
+   "label": "3 Year Instance",
+   "width": 0
+  },
+  {
+   "fieldname": "3yr_compute",
+   "fieldtype": "Float",
+   "label": "3 Year Compute",
+   "width": 0
+  }
+ ],
+ "creation": "2022-09-19 17:12:10.701432",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+  {
+   "fieldname": "cluster",
+   "fieldtype": "Link",
+   "label": "Cluster",
+   "mandatory": 0,
+   "options": "Cluster",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "instance_family",
+   "fieldtype": "Select",
+   "label": "Instance Family",
+   "mandatory": 0,
+   "options": "\nGeneral Purpose\nCompute Optimized\nMemory Optimized",
+   "wildcard_filter": 0
+  },
+  {
+   "default": "Intel",
+   "fieldname": "processor",
+   "fieldtype": "Select",
+   "label": "Processor",
+   "mandatory": 0,
+   "options": "Intel\nAMD\nGraviton\n",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "latest_generation_only",
+   "fieldtype": "Check",
+   "label": "Latest Generation Only",
+   "mandatory": 0,
+   "wildcard_filter": 0
+  }
+ ],
+ "idx": 0,
+ "is_standard": "Yes",
+ "json": "{}",
+ "letterhead": null,
+ "modified": "2023-11-06 19:08:45.728372",
+ "modified_by": "Administrator",
+ "module": "Press",
+ "name": "AWS Instance Pricing",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Cluster",
+ "report_name": "AWS Instance Pricing",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ]
+}

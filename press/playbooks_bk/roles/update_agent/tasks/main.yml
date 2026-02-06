@@ -1,0 +1,69 @@
+---
+- name: Update Agent Repository Remote
+  become: yes
+  become_user: frappe
+  command: 'git remote set-url upstream {{ agent_repository_url }}'
+  args:
+    chdir: /home/frappe/agent/repo
+
+- name: Fetch Agent Upstream
+  become: yes
+  become_user: frappe
+  command: 'git fetch upstream'
+  args:
+    chdir: /home/frappe/agent/repo
+
+- name: Checkout specified commit or branch
+  become: yes
+  become_user: frappe
+  shell: |
+    git checkout {{ agent_repository_branch_or_commit_ref }}
+    git reset --hard {{ agent_repository_branch_or_commit_ref }}
+    git clean -fd
+  args:
+    chdir: /home/frappe/agent/repo
+
+- name: Install Python Requirements
+  become: yes
+  become_user: frappe
+  command: './env/bin/pip install -r ./repo/requirements.txt'
+  args:
+    chdir: /home/frappe/agent
+
+- name: Install Agent
+  command: './env/bin/pip install -e /home/frappe/agent/repo'
+  args:
+    chdir: /home/frappe/agent
+
+- name: Update Agent database
+  become: yes
+  become_user: frappe
+  command: /home/frappe/agent/env/bin/agent setup database
+  args:
+    chdir: /home/frappe/agent
+
+- name: Run agent db patches
+  become: yes
+  become_user: frappe
+  command: /home/frappe/agent/env/bin/agent run-patches
+  args:
+    chdir: /home/frappe/agent
+
+- name: Update Agent
+  become: yes
+  become_user: frappe
+  command: '/home/frappe/agent/env/bin/agent update {{ agent_update_args }}'
+  args:
+    chdir: /home/frappe/agent
+
+- name: Set Ownership of Agent Logs to Frappe user
+  file:
+    path: /home/frappe/agent/logs
+    owner: frappe
+    group: frappe
+    recurse: yes
+
+- name: Ensure Agent processes are started
+  supervisorctl:
+    name: 'agent:'
+    state: started

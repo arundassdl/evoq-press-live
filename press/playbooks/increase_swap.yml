@@ -1,0 +1,9 @@
+---
+- name: Increase Swap
+  hosts: all
+  become: yes
+  become_user: root
+  gather_facts: no
+  roles:
+    - role: swap
+    - role: swap_config

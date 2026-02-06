@@ -1,0 +1,8 @@
+[webservers]
+188.245.156.163 ansible_user=frappe ansible_ssh_private_key_file=~/.ssh/id_rsa
+[self_hosted]
+188.245.156.163 ansible_user=frappe ansible_ssh_private_key_file=/home/frappe/.ssh/id_rsa
+#[self_hosted]
+#188.245.156.163 ansible_user=root ansible_ssh_private_key_file=/root/.ssh/id_rsa ansible_python_interpreter=/usr/bin/python3
+[frappe_servers]
+188.245.156.163 ansible_user=frappe ansible_ssh_private_key_file=~/.ssh/id_rsa

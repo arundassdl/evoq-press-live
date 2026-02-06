@@ -1,0 +1,17 @@
+---
+- name: Setup Log Server
+  hosts: all
+  become: yes
+  become_user: root
+  gather_facts: yes
+  roles:
+    - role: essentials
+    - role: user
+    - role: nginx
+    - role: agent
+    - role: node_exporter
+    - role: filebeat
+    - role: elasticsearch
+    - role: elasticsearch_exporter
+    - role: kibana
+    - role: filebeat_elasticsearch

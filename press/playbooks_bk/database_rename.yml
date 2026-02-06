@@ -1,0 +1,14 @@
+---
+- name: Rename Database Server
+  hosts: all
+  become: yes
+  become_user: root
+  gather_facts: yes
+  roles:
+    - role: mariadb_rename
+    - role: agent_rename
+    - role: mysqld_exporter_rename
+    - role: deadlock_logger_rename
+    - role: filebeat_rename
+    - role: sshd_hardening
+    - role: user_ssh_certificate

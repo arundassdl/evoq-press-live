@@ -1,0 +1,290 @@
+---
+# roles/agent/tasks/main.yml (corrected)
+- name: Ensure agent install dir exists
+  file:
+    path: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+    state: directory
+    owner: frappe
+    group: frappe
+    mode: "0755"
+  become: yes
+
+- name: Clone or update Agent repository
+  git:
+    repo: "{{ agent_repository_url | default('https://github.com/frappe/agent.git') }}"
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/repo"
+    version: "{{ agent_branch | default('master') }}"
+    update: yes
+    force: no
+    accept_hostkey: yes
+  become: yes
+  become_user: frappe
+
+- name: Check if 'upstream' remote exists
+  command: git remote get-url upstream
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}/repo"
+  register: upstream_check
+  changed_when: false
+  failed_when: false
+
+- name: Add 'upstream' remote if missing
+  command: git remote add upstream "{{ agent_repository_url | default('https://github.com/frappe/agent.git') }}"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}/repo"
+  become: yes
+  become_user: frappe
+  when: upstream_check.rc != 0
+
+- name: Ensure 'upstream' url is correct if present
+  command: git remote set-url upstream "{{ agent_repository_url | default('https://github.com/frappe/agent.git') }}"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}/repo"
+  become: yes
+  become_user: frappe
+  when: upstream_check.rc == 0
+
+- name: Install Agent (pip into virtualenv)
+  pip:
+    name: "file://{{ agent_install_dir | default('/home/frappe/agent') }}/repo"
+    virtualenv: "{{ agent_install_dir | default('/home/frappe/agent') }}/env"
+    virtualenv_python: python3
+    editable: yes
+  become: yes
+  become_user: frappe
+
+- name: Generate Agent Configuration File
+  command: >
+    {{ agent_install_dir | default('/home/frappe/agent') }}/env/bin/agent setup config
+    --name {{ server }}
+    --workers {{ workers }}
+    {% if proxy_ip is defined and proxy_ip is truthy %} --proxy-ip {{ proxy_ip }}{% endif %}
+    {% if agent_sentry_dsn is defined and agent_sentry_dsn is truthy %} --sentry-dsn {{ agent_sentry_dsn }}{% endif %}
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+  become: yes
+  become_user: frappe
+
+- name: Setup Agent SQLite Database
+  command: "{{ agent_install_dir | default('/home/frappe/agent') }}/env/bin/agent setup database"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+  become: yes
+  become_user: frappe
+
+- name: Setup Agent Usage Tracker
+  command: "{{ agent_install_dir | default('/home/frappe/agent') }}/env/bin/agent setup usage"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+  become: yes
+  become_user: frappe
+
+- name: Setup Agent Site Analytics Tracker
+  command: "{{ agent_install_dir | default('/home/frappe/agent') }}/env/bin/agent setup site-analytics"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+  become: yes
+  become_user: frappe
+
+- name: Create Agent NGINX Configuration Directory
+  file:
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/nginx"
+    state: directory
+    owner: frappe
+    group: frappe
+    mode: "0755"
+  become: yes
+  become_user: frappe
+
+- name: Setup Agent Authentication
+  command: "{{ agent_install_dir | default('/home/frappe/agent') }}/env/bin/agent setup authentication --password {{ agent_password }}"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+  become: yes
+  become_user: frappe
+
+- name: Symlink Agent Supervisor Configuration
+  file:
+    src: "{{ agent_install_dir | default('/home/frappe/agent') }}/supervisor.conf"
+    dest: /etc/supervisor/conf.d/agent.conf
+    state: link
+    force: yes
+    follow: no
+  become: yes
+
+- name: Create Logs Directory for Supervisor
+  file:
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/logs"
+    state: directory
+    owner: frappe
+    group: frappe
+    mode: "0755"
+  become: yes
+  become_user: frappe
+
+- name: Setup Agent Supervisor
+  command: "{{ agent_install_dir | default('/home/frappe/agent') }}/env/bin/agent setup supervisor"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+  become: yes
+  become_user: frappe
+
+- name: Create NGINX Root Configuration File
+  file:
+    path: "{{ agent_install_dir | default('/home/frappe/agent') }}/nginx/nginx.conf"
+    state: touch
+    owner: frappe
+    group: frappe
+  become: yes
+  become_user: frappe
+
+- name: Symlink NGINX Root Configuration File
+  file:
+    src: "{{ agent_install_dir | default('/home/frappe/agent') }}/nginx/nginx.conf"
+    dest: /etc/nginx/nginx.conf
+    state: link
+    force: yes
+    follow: no
+  become: yes
+
+- name: Create Agent NGINX Configuration File
+  file:
+    path: "{{ agent_install_dir | default('/home/frappe/agent') }}/nginx.conf"
+    state: touch
+    owner: frappe
+    group: frappe
+  become: yes
+  become_user: frappe
+
+- name: Symlink Agent NGINX Configuration File
+  file:
+    src: "{{ agent_install_dir | default('/home/frappe/agent') }}/nginx.conf"
+    dest: /etc/nginx/conf.d/agent.conf
+    state: link
+    force: yes
+    follow: no
+  become: yes
+
+# ------------------ TLS handling (idempotent & safe) ------------------
+- name: Ensure Agent TLS directory exists (owned by root)
+  file:
+    path: "{{ agent_install_dir | default('/home/frappe/agent') }}/tls"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: yes
+
+- name: Stat system letsencrypt privkey
+  stat:
+    path: /etc/letsencrypt/live/evoq.app/privkey.pem
+  register: letsencrypt_privkey
+  become: yes
+
+- name: Stat system letsencrypt fullchain
+  stat:
+    path: /etc/letsencrypt/live/evoq.app/fullchain.pem
+  register: letsencrypt_fullchain
+  become: yes
+
+- name: If user provided certificate_private_key variable, write private key
+  copy:
+    content: "{{ certificate_private_key }}"
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/tls/privkey.pem"
+    owner: root
+    group: root
+    mode: '0600'
+  when: certificate_private_key is defined and certificate_private_key | length > 0
+  become: yes
+
+- name: If user provided certificate_full_chain variable, write fullchain
+  copy:
+    content: "{{ certificate_full_chain }}"
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/tls/fullchain.pem"
+    owner: root
+    group: root
+    mode: '0644'
+  when: certificate_full_chain is defined and certificate_full_chain | length > 0
+  become: yes
+
+- name: If letsencrypt files exist, create symlinks to them (preferred)
+  file:
+    src: "{{ item.src }}"
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/tls/{{ item.dest }}"
+    state: link
+    force: yes
+  loop:
+    - { src: '/etc/letsencrypt/live/evoq.app/privkey.pem', dest: 'privkey.pem' }
+    - { src: '/etc/letsencrypt/live/evoq.app/fullchain.pem', dest: 'fullchain.pem' }
+  when: letsencrypt_privkey.stat.exists and letsencrypt_fullchain.stat.exists
+  become: yes
+
+- name: If letsencrypt not present and no vars provided, fail with explanation
+  fail:
+    msg: |
+      Neither system LetsEncrypt certs were found at /etc/letsencrypt/live/evoq.app/ nor were certificate variables provided.
+      Provide valid certs or set certificate_private_key and certificate_full_chain variables.
+  when: not (letsencrypt_privkey.stat.exists and letsencrypt_fullchain.stat.exists) and
+        not (certificate_private_key is defined and certificate_private_key | length > 0 and
+             certificate_full_chain is defined and certificate_full_chain | length > 0)
+  become: yes
+
+# ------------------ end TLS handling ------------------
+
+- name: Setup Agent NGINX
+  command: "{{ agent_install_dir | default('/home/frappe/agent') }}/env/bin/agent setup nginx"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+  become: yes
+  become_user: frappe
+
+
+# Ensure htpasswd tool is available (Debian/Ubuntu). Remove/adjust if using different OS.
+- name: Ensure apache2-utils (htpasswd) is installed
+  apt:
+    name: apache2-utils
+    state: present
+    update_cache: no
+  become: yes
+  when: ansible_os_family == 'Debian' or ansible_distribution == 'Ubuntu'
+
+# Fallback for other OSes: try installing httpd-tools on RHEL family
+- name: Ensure httpd-tools (htpasswd) is installed on RHEL
+  yum:
+    name: httpd-tools
+    state: present
+  become: yes
+  when: ansible_os_family == 'RedHat'
+
+# Ensure the agent nginx folder exists (owner frappe)
+- name: Ensure nginx config dir exists for agent
+  file:
+    path: "{{ agent_install_dir | default('/home/frappe/agent') }}/nginx"
+    state: directory
+    owner: frappe
+    group: frappe
+    mode: '0755'
+  become: yes
+
+# Generate a monitoring password if not provided (runs on control node)
+- name: Ensure monitoring_password variable exists (generate if not provided)
+  set_fact:
+    monitoring_password: "{{ monitoring_password | default(lookup('password', '/dev/null length=20 chars=ascii_letters,digits')) }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+# Write the htpasswd file as the frappe user (so file ownership matches earlier tasks)
+- name: Setup Monitoring Authentication (create htpasswd)
+  command: >
+    htpasswd -Bbc {{ agent_install_dir | default('/home/frappe/agent') }}/nginx/monitoring.htpasswd
+    frappe {{ monitoring_password }}
+  become: yes
+  become_user: frappe
+
+# (Optional) Print where the password was saved — useful if auto-generated
+- name: Show monitoring password (only when auto-generated)
+  debug:
+    msg: "monitoring_password={{ monitoring_password }}"
+  when: monitoring_password is defined and (monitoring_password is not string or monitoring_password|length >= 0) and (ansible_check_mode == false)
+  # remove or vault this in production - it's noisy to print secret in plain text
+

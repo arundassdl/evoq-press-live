@@ -1,0 +1,12 @@
+---
+- name: Rename Server
+  hosts: all
+  become: yes
+  become_user: root
+  gather_facts: yes
+  roles:
+    - role: agent_rename
+    - role: statsd_exporter_rename
+    - role: filebeat_rename
+    - role: sshd_hardening
+    - role: user_ssh_certificate

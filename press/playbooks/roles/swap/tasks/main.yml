@@ -1,0 +1,41 @@
+---
+- name: Set swap file name
+  set_fact:
+    swap_file: "{{ swap_file | default('swap') }}"
+
+- name: Confirm file doesn't exist
+  stat:
+    path: '/{{ swap_file }}'
+  register: stat_result
+  failed_when: 'stat_result.stat.exists'
+  when: swap_size | int > 0
+
+- name: Create Swap file
+  command: fallocate -l {{ swap_size }}G /{{ swap_file }}
+  when: swap_size | int > 0
+
+- name: Change Swap file permissions
+  file:
+    path: '/{{ swap_file }}'
+    owner: root
+    group: root
+    mode: 0600
+  when: swap_size | int > 0
+
+- name: Make Swap
+  command: mkswap /{{ swap_file }}
+  when: swap_size | int > 0
+
+- name: Add Swap to fstab
+  mount:
+    name: none
+    src: '/{{ swap_file }}'
+    fstype: swap
+    opts: sw
+    passno: 0
+    dump: 0
+    state: present
+  when: swap_size | int > 0
+
+- name: Enable Swap
+  command: swapon -av

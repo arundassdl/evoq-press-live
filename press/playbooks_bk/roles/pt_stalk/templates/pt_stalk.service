@@ -1,0 +1,26 @@
+[Unit]
+Description=Percona Stalk
+After=network-online.target
+
+[Service]
+Type=simple
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStart=/usr/bin/pt-stalk --defaults-file /root/.my.cnf \
+    --host {{ private_ip }} \
+    --port {{ mariadb_port }} \
+    {% if stalk_gdb_collector | bool %} --collect-gdb {% endif %} \
+    {% if stalk_strace_collector | bool %} --collect-strace {% endif %} \
+    --interval {{ stalk_interval }} \
+    --cycles {{ stalk_cycles }} \
+    --sleep {{ stalk_sleep }} \
+    --function {{ stalk_function }} \
+    --variable {{ stalk_variable }} \
+    --threshold {{ stalk_threshold }}
+
+SyslogIdentifier=pt_stalk
+Restart=always
+RestartSec=1
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,44 @@
+- name: Wait For Elasticsearch
+  wait_for:
+    port: 9200
+
+- name: Wait For Kibana
+  wait_for:
+    port: 5601
+
+- name: Wait For Kibana To Start
+  command: "curl --silent http://localhost:5601/api/status"
+  register: result
+  until: result.stdout.find("success") != -1
+  retries: 60
+  delay: 1
+  changed_when: false
+
+- name: Setup Filebeat Indexes
+  command: filebeat setup -e -E setup.ilm.overwrite=true -E 'output.elasticsearch.hosts=["localhost:9200"]' -E output.elasticsearch.path="/" -E output.elasticsearch.protocol=http --index-management
+
+- name: Setup Filebeat Ingest Pipelines
+  command: filebeat setup -e --pipelines --modules nginx,system,mysql
+
+- name: Setup Filebeat Dashboards
+  command: filebeat setup -e --dashboards
+
+- name: Setup Monitor Ingest Pipeline
+  uri:
+    url: http://localhost:9200/_ingest/pipeline/monitor
+    method: PUT
+    body: "{{ lookup('file', 'monitor.json') }}"
+    body_format: json
+
+- name: Setup NGINX Ingest Pipeline
+  uri:
+    url: http://localhost:9200/_ingest/pipeline/nginx
+    method: PUT
+    body: "{{ lookup('file', 'nginx.json') }}"
+    body_format: json
+
+- name: Disable Filebeat Service
+  systemd:
+    name: filebeat
+    enabled: no
+    state: stopped

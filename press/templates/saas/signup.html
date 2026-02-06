@@ -1,0 +1,262 @@
+{%- extends "templates/saas/layout.html" -%}
+{% set app_title = app_title %}
+{% set image_path = image_path %}
+
+{%- block content -%}
+<input id="app" type="text" value="{{ app }}" hidden />
+<input id="domain" type="text" value="{{ domain }}" hidden />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css" />
+
+<div class="flex justify-center mx-auto form-container col-xl-5 col-lg-6 col-md-7 col-sm-9" id="user-signup"
+	data-validators="field_validators">
+	<div class="card bg-gray-200">
+		<div class="card-body">
+			<div class="alert alert-primary form-alert-info small" style="display: none;" role="alert"></div>
+			<div class="alert alert-danger form-alert-error small" style="display: none;" role="alert"></div>
+			<!-- 1. Personal Details -->
+			<form class="form-step create-account-form" data-step="1" data-action="submit_account_request">
+				<div class="form-group">
+					<p>Site Name</p>
+					<div class="input-group">
+						<input type="text" id="subdomain" name="subdomain" class="form-control"
+							placeholder="yourcompany" autocomplete="off" onchange="validate_subdomain(this)">
+						<div class="input-group-append">
+							<p class="px-2 py-0 text-xs input-group-text rounded-right">.{{ domain }}</p>
+						</div>
+					</div>
+					<small class="form-text"></small>
+				</div>
+				<div class="form-row">
+					<div class="form-group col-12 col-md-6">
+						<p>First Name</p>
+						<input type="text" id="first_name" name="first_name" class="form-control"
+							autocomplete="given-name">
+					</div>
+					<div class="form-group col-12 col-md-6">
+						<p>Last Name</p>
+						<input type="text" id="last_name" name="last_name" class="form-control"
+							autocomplete="family-name">
+					</div>
+				</div>
+				<div class="form-group">
+					<p for="country" class="">Country</p>
+					<select id="country" class="custom-select" name="country">
+						{%- if country_name -%}
+						<option selected="selected">{{ country_name }}</option>
+						{%- else -%}
+						<option disabled selected="selected">Select Country</option>
+						{%- endif -%}
+						{%- for country in frappe.db.get_all('Country') -%}
+						<option>
+							{{ country.name }}
+						</option>
+						{%- endfor -%}
+					</select>
+				</div>
+				<div class="form-group">
+					<p>Email Address</p>
+					<input type="email" id="email" class="form-control" name="email" autocomplete="email">
+				</div>
+
+				<div class="form-group">
+					<input type="checkbox" name="user_accept_terms" id="user_accept_terms"
+						style="margin-bottom: -0.15rem;">
+					<p class="d-inline" for="user_accept_terms">
+						I agree to Frappe
+						<a href="https://frappecloud.com/terms" class="text-blue-600">Terms of Service</a>,
+						<a href="https://frappecloud.com/privacy" class="text-blue-600">Privacy Policy</a>
+						&#38;
+						<a href="https://frappecloud.com/cookie-policy" class="text-blue-600">Cookie Policy.</a>
+					</p>
+				</div>
+
+				<button id="accountRequestButton" type="submit"
+					style="width: 100%; background-color: #171717; color: white;" class="btn btn-step-1">Create
+					Account</button>
+			</form>
+
+			{% if enable_google_oauth %}
+			<div id="googleLogin" class="flex justify-content-between" style="flex-direction: column;">
+				<div class="my-2 border-t text-center text-xs">
+					<div class="-translate-y-1/2 transform">
+						<p class="bg-white px-2 text-xs uppercase leading-8 tracking-wider text-gray-800">
+							Or
+						</p>
+					</div>
+				</div>
+				<div class="btn btn-secondary" style="width: 100%;" onclick="signupWithGoogle()">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
+						<path fill="#FFC107"
+							d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+						<path fill="#FF3D00"
+							d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+						<path fill="#4CAF50"
+							d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+						<path fill="#1976D2"
+							d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+					</svg>
+					<span>
+						Signup with Google
+					</span>
+				</div>
+			</div>
+			{% endif %}
+			<!-- 2. Verification Email Sent -->
+			<form class="form-step" data-step="2">
+				<div class="text-center">
+					<h2 class="font-size-base mt-0">Verification email sent</h2>
+					<p>
+						We have sent an email to <span class="verification-email"></span>.
+						Please click on the link received to verify your email and create your account.
+					</p>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+{%- endblock -%}
+
+{%- block script -%}
+<script src="/assets/press/js/form_controller.js"></script>
+<script>
+	const app = document.getElementById('app').value;
+	const domain = document.getElementById('domain').value;
+	let controller;
+
+	frappe.ready(() => {
+		controller = new FormController("user-signup");
+		set_subdomain_from_url();
+	});
+
+	var field_validators = {
+		subdomain: (value) => {
+			let MIN_LENGTH = 4;
+			let MAX_LENGTH = 20;
+			if (value.length < MIN_LENGTH) {
+				return `Site name cannot have less than ${MIN_LENGTH} characters`;
+			}
+			if (value.length > MAX_LENGTH) {
+				return `Site name cannot have more than ${MAX_LENGTH} characters`;
+			}
+			if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(value)) {
+				return "Site name should contain lowercase alphabets, numbers, and hyphens";
+			}
+		},
+		first_name: value => {
+			if (!value) {
+				return 'First Name is required'
+			}
+		},
+		last_name: value => {
+			if (!value) {
+				return 'Last Name is required'
+			}
+		},
+		email: (value) => {
+			if (!valid_email(value)) {
+				return "Invalid email";
+			}
+		},
+		country: (value) => {
+			if (!value) {
+				return "Please enter your country name";
+			}
+		},
+		user_accept_terms: (value) => {
+			if (!value) {
+				return "You need to accept our Terms of Service & Privacy Policy"
+			}
+		}
+	};
+
+	function submit_account_request($form, values) {
+		$('#accountRequestButton').prop('disabled', true);
+		$("#accountRequestButton").html('<span class="mr-2">Signing up</span><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+		let url_args = frappe.utils.get_query_params();
+		let form_data = {};
+		if (Object.keys(url_args)) {
+			values.url_args = url_args;
+		}
+		values.app = app;
+		if (values) {
+			form_data = { ...values, app }
+		}
+
+		return call('press.api.saas.account_request', form_data)
+			.then(() => {
+				$('h1').hide();
+				$('#googleLogin').toggle();
+				$('.verification-email').text(form_data.email);
+			});
+	}
+
+	function set_subdomain_from_url() {
+		let query_params = frappe.utils.get_query_params();
+		if (query_params.domain) {
+			let subdomain = query_params.domain.replace(`.${domain}`, "");
+			$('input[name="subdomain"]').val(subdomain).trigger("change");
+		}
+	}
+
+	function call(method, args) {
+		return frappe
+			.call({
+				method,
+				args,
+				type: "POST",
+			})
+			.then((r) => {
+				if (r.exc) {
+					console.error("An error occurred", r.exc);
+					return;
+				}
+				return r;
+			});
+	}
+
+	function validate_subdomain(input) {
+		let $input = $(input);
+		let subdomain = $input.val();
+		let error = controller.validate_value("subdomain", subdomain);
+		if (error) {
+			controller.show_input_error("subdomain", error);
+		} else {
+			check_if_available(subdomain).then((available) => {
+				controller.show_input_feedback(
+					"subdomain",
+					!available ? `${subdomain}.${domain} is already taken` : `${subdomain}.${domain} is available`,
+					!available
+				);
+			});
+		}
+	}
+
+	function check_if_available(subdomain) {
+		return frappe
+			.call({
+				method: "press.api.saas.check_subdomain_availability",
+				args: { subdomain, app: app },
+				type: "POST",
+			})
+			.then((r) => {
+				if (r.message) {
+					return true;
+				}
+				return false;
+			});
+	}
+
+	function signupWithGoogle() {
+		return frappe.call({
+			method: "press.api.oauth.google_login",
+			args: {
+				saas_app: app
+			},
+			type: "POST",
+		}).then(r => {
+			window.open(r.message, '_self');
+		})
+	}
+
+</script>
+{%- endblock -%}

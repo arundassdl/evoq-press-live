@@ -1,0 +1,144 @@
+{%- extends "templates/base.html" -%}
+
+{%- block navbar -%}
+<nav class="bg-transparent navbar navbar-light justify-content-center border-bottom-0">
+	<div class="text-center my-8">
+		<img src="{{ image_path }}" alt="Logo" style="height: 28px;">
+	</div>
+</nav>
+{%- endblock -%}
+
+{%- block footer -%}
+{%- endblock -%}
+
+{%- block content -%}
+{%- endblock -%}
+
+{%- block script -%}
+{{ super() }}
+{%- endblock -%}
+
+{%- block style -%}
+<style>
+	body {
+		background-color: #F3F5F8;
+	}
+
+	h1 {
+		font-size: var(--font-size-xl);
+		font-weight: 400;
+		text-align: center;
+	}
+
+	p {
+		font-size: 13px;
+		margin-bottom: 4px;
+	}
+
+	.form-step {
+		display: none;
+	}
+
+	.card {
+		width: 80%;
+		box-shadow: 0px 1px 42px rgba(97, 97, 97, 0.07), 0px 1px 4px rgba(255, 255, 255, 1);
+		border-color: transparent;
+		height: fit-content;
+	}
+
+	.card-body {
+		border-radius: 10px;
+		padding: 30px 30px 30px 30px;
+	}
+
+	.password-popup {
+		align-self: center;
+		right: 30%;
+		position: absolute;
+		display: flex;
+		flex-direction: column;
+		text-decoration: none;
+		font-size: smaller;
+		padding: 8px 8px;
+		background-color: white;
+		border: 1px solid #ddd;
+		border-radius: 5px;
+	}
+
+	.password-popup-list {
+		list-style-type: none;
+		padding: 0;
+		font-size: small;
+	}
+
+	form i {
+		margin-left: -30px;
+		cursor: pointer;
+	}
+
+	select {
+		margin: 0px;
+	}
+
+	#password {
+		width: 100%;
+		background-color: #F4F5F6;
+		border-radius: 5px;
+		border: none;
+		padding: 7px 12px;
+		font-size: small;
+	}
+
+	#password:focus {
+		outline: none;
+	}
+
+	.password-popup-list-item-text {
+		color: rgb(220 38 38);
+	}
+
+	#country,
+	#no_of_employees,
+	#industry,
+	#designation {
+		font-size: small;
+	}
+
+	.step {
+		height: 15px;
+		width: 15px;
+		margin: 0 2px;
+		background-color: #bbbbbb;
+		border-radius: 50%;
+		display: inline-block;
+		opacity: 0.5;
+	}
+
+	/* Mark the active step: */
+	.step-active {
+		opacity: 1;
+		border: 2px solid rgb(147 197 253);
+	}
+
+	/* Mark the steps that are finished and valid: */
+	.step-finish {
+		background-color: #0289FF;
+	}
+
+	@media (max-width: 576px) {
+		h1 {
+			margin-top: 0.5em;
+			margin-bottom: 1em;
+		}
+
+		.form-container {
+			padding: 0;
+		}
+
+		.card {
+			border-radius: 0;
+			padding: 0;
+		}
+	}
+</style>
+{%- endblock -%}

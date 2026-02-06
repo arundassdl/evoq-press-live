@@ -1,0 +1,11 @@
+- module: nginx
+  access:
+    enabled: true
+    input:
+      pipeline: nginx
+
+  error:
+    enabled: true
+
+  ingress_controller:
+    enabled: false

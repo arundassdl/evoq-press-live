@@ -1,0 +1,56 @@
+<template>
+	<FTabs v-if="visibleTabs?.length" v-model="currentTab" :tabs="visibleTabs">
+		<template #tab-panel="{ tab }">
+			<slot name="tab-content" :tab="tab">
+				<router-view :tab="tab" />
+			</slot>
+		</template>
+	</FTabs>
+</template>
+<script>
+import { Tabs } from 'frappe-ui';
+
+export default {
+	name: 'TabsWithRouter',
+	props: ['tabs', 'document'],
+	components: {
+		FTabs: Tabs,
+	},
+	computed: {
+		visibleTabs() {
+			return this.tabs.filter((tab) => {
+				if (
+					this.document?.tabs_access &&
+					tab.label in this.document.tabs_access &&
+					!this.document.tabs_access[tab.label]
+				) {
+					return false;
+				} else if (tab.condition) {
+					return tab.condition({ doc: this.document });
+				} else {
+					return true;
+				}
+			});
+		},
+		currentTab: {
+			get() {
+				for (let tab of this.visibleTabs) {
+					let tabRouteName = tab.routeName || tab.route.name;
+					if (
+						this.$route.name === tabRouteName ||
+						tab.childrenRoutes?.includes(this.$route.name)
+					) {
+						return this.visibleTabs.indexOf(tab);
+					}
+				}
+				return 0;
+			},
+			set(val) {
+				let tab = this.visibleTabs[val];
+				let tabRouteName = tab.routeName || tab.route.name;
+				this.$router.push({ name: tabRouteName });
+			},
+		},
+	},
+};
+</script>

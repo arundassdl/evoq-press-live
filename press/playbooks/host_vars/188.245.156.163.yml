@@ -1,0 +1,6 @@
+server: "188.245.156.163"
+  #agent_password: "99646796f202452ed3faeb69ab0d3d23"
+agent_password: "test_password_12345"
+# optionally:
+ansible_user: frappe
+ansible_ssh_private_key_file: ~/.ssh/id_rsa

@@ -1,0 +1,275 @@
+---
+# roles/agent/tasks/main.yml
+- name: Ensure agent install dir exists
+  file:
+    path: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+    state: directory
+    owner: frappe
+    group: frappe
+    mode: "0755"
+  become: yes
+
+- name: Clone or update Agent repository
+  git:
+    repo: "{{ agent_repository_url | default('https://github.com/frappe/agent.git') }}"
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/repo"
+    version: "{{ agent_branch | default('master') }}"
+    update: yes
+    force: no
+    accept_hostkey: yes
+  become: yes
+  become_user: frappe
+
+- name: Check if 'upstream' remote exists
+  command: git remote get-url upstream
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}/repo"
+  register: upstream_check
+  changed_when: false
+  failed_when: false
+
+- name: Add 'upstream' remote if missing
+  command: git remote add upstream "{{ agent_repository_url | default('https://github.com/frappe/agent.git') }}"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}/repo"
+  become: yes
+  become_user: frappe
+  when: upstream_check.rc != 0
+
+- name: Ensure 'upstream' url is correct if present
+  command: git remote set-url upstream "{{ agent_repository_url | default('https://github.com/frappe/agent.git') }}"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}/repo"
+  become: yes
+  become_user: frappe
+  when: upstream_check.rc == 0
+
+- name: Install Agent (pip into virtualenv)
+  pip:
+    name: "file://{{ agent_install_dir | default('/home/frappe/agent') }}/repo"
+    virtualenv: "{{ agent_install_dir | default('/home/frappe/agent') }}/env"
+    virtualenv_python: python3
+    editable: yes
+  become: yes
+  become_user: frappe
+
+- name: Generate Agent Configuration File
+  command: >
+    {{ agent_install_dir | default('/home/frappe/agent') }}/env/bin/agent setup config
+    --name {{ server }}
+    --workers {{ workers }}
+    {% if proxy_ip is defined and proxy_ip is truthy %} --proxy-ip {{ proxy_ip }}{% endif %}
+    {% if agent_sentry_dsn is defined and agent_sentry_dsn is truthy %} --sentry-dsn {{ agent_sentry_dsn }}{% endif %}
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+  become: yes
+  become_user: frappe
+
+- name: Setup Agent SQLite Database
+  command: "{{ agent_install_dir | default('/home/frappe/agent') }}/env/bin/agent setup database"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+  become: yes
+  become_user: frappe
+
+- name: Setup Agent Usage Tracker
+  command: "{{ agent_install_dir | default('/home/frappe/agent') }}/env/bin/agent setup usage"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+  become: yes
+  become_user: frappe
+
+- name: Setup Agent Site Analytics Tracker
+  command: "{{ agent_install_dir | default('/home/frappe/agent') }}/env/bin/agent setup site-analytics"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+  become: yes
+  become_user: frappe
+
+- name: Create Agent NGINX Configuration Directory
+  file:
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/nginx"
+    state: directory
+    owner: frappe
+    group: frappe
+    mode: "0755"
+  become: yes
+  become_user: frappe
+
+- name: Setup Agent Authentication
+  command: "{{ agent_install_dir | default('/home/frappe/agent') }}/env/bin/agent setup authentication --password {{ agent_password }}"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+  become: yes
+  become_user: frappe
+
+- name: Symlink Agent Supervisor Configuration
+  file:
+    src: "{{ agent_install_dir | default('/home/frappe/agent') }}/supervisor.conf"
+    dest: /etc/supervisor/conf.d/agent.conf
+    state: link
+    force: yes
+    follow: no
+  become: yes
+
+- name: Create Logs Directory for Supervisor
+  file:
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/logs"
+    state: directory
+    owner: frappe
+    group: frappe
+    mode: "0755"
+  become: yes
+  become_user: frappe
+
+- name: Setup Agent Supervisor
+  command: "{{ agent_install_dir | default('/home/frappe/agent') }}/env/bin/agent setup supervisor"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+  become: yes
+  become_user: frappe
+
+- name: Create NGINX Root Configuration File
+  file:
+    path: "{{ agent_install_dir | default('/home/frappe/agent') }}/nginx/nginx.conf"
+    state: touch
+    owner: frappe
+    group: frappe
+  become: yes
+  become_user: frappe
+
+- name: Symlink NGINX Root Configuration File
+  file:
+    src: "{{ agent_install_dir | default('/home/frappe/agent') }}/nginx/nginx.conf"
+    dest: /etc/nginx/nginx.conf
+    state: link
+    force: yes
+    follow: no
+  become: yes
+
+- name: Create Agent NGINX Configuration File
+  file:
+    path: "{{ agent_install_dir | default('/home/frappe/agent') }}/nginx.conf"
+    state: touch
+    owner: frappe
+    group: frappe
+  become: yes
+  become_user: frappe
+
+- name: Symlink Agent NGINX Configuration File
+  file:
+    src: "{{ agent_install_dir | default('/home/frappe/agent') }}/nginx.conf"
+    dest: /etc/nginx/conf.d/agent.conf
+    state: link
+    force: yes
+    follow: no
+  become: yes
+
+- name: Ensure Agent TLS directory exists
+  file:
+    path: "{{ agent_install_dir | default('/home/frappe/agent') }}/tls"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: yes
+
+- name: Copy Agent TLS private key (from remote letsencrypt)
+  copy:
+    src: /etc/letsencrypt/live/evoq.app/privkey.pem
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/tls/privkey.pem"
+    owner: root
+    group: root
+    mode: '0600'
+    remote_src: yes
+  become: yes
+  # do NOT set become_user: frappe here
+
+- name: Copy Agent TLS fullchain (from remote letsencrypt)
+  copy:
+    src: /etc/letsencrypt/live/evoq.app/fullchain.pem
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/tls/fullchain.pem"
+    owner: root
+    group: root
+    mode: '0644'
+    remote_src: yes
+  become: yes
+
+- name: Copy Agent TLS chain (from remote letsencrypt)
+  copy:
+    src: /etc/letsencrypt/live/evoq.app/chain.pem
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/tls/chain.pem"
+    owner: root
+    group: root
+    mode: '0644'
+    remote_src: yes
+  become: yes
+
+
+- name: Create Agent TLS Directory
+  file:
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/tls"
+    state: directory
+    owner: frappe
+    group: frappe
+    mode: "0755"
+  become: yes
+  become_user: frappe
+
+- name: Setup Agent TLS (Private Key)
+  copy:
+    content: "{{ certificate_private_key | default('/etc/letsencrypt/live/evoq.app/privkey.pem') }}"
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/tls/privkey.pem"
+    owner: frappe
+    group: frappe
+    mode: "0600"
+  become: yes
+  become_user: frappe
+
+- name: Setup Agent TLS (Full Chain)
+  copy:
+    content: "{{ certificate_full_chain  | default('/etc/letsencrypt/live/evoq.app/fullchain.pem') }}"
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/tls/fullchain.pem"
+    owner: frappe
+    group: frappe
+    mode: "0644"
+  become: yes
+  become_user: frappe
+
+- name: Setup Agent TLS (Intermediate Chain)
+  copy:
+    content: "{{ certificate_intermediate_chain | default('/etc/letsencrypt/live/evoq.app/chain.pem') }}"
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/tls/chain.pem"
+    owner: frappe
+    group: frappe
+    mode: "0644"
+  become: yes
+  become_user: frappe
+
+- name: Symlink agent privkey to letsencrypt
+  file:
+    src: /etc/letsencrypt/live/evoq.app/privkey.pem
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/tls/privkey.pem"
+    state: link
+  become: yes
+
+- name: Symlink fullchain
+  file:
+    src: /etc/letsencrypt/live/evoq.app/fullchain.pem
+    dest: "{{ agent_install_dir | default('/home/frappe/agent') }}/tls/fullchain.pem"
+    state: link
+  become: yes
+
+
+- name: Setup Agent NGINX
+  command: "{{ agent_install_dir | default('/home/frappe/agent') }}/env/bin/agent setup nginx"
+  args:
+    chdir: "{{ agent_install_dir | default('/home/frappe/agent') }}"
+  become: yes
+  become_user: frappe
+
+- name: Setup Monitoring Authentication
+  command: "htpasswd -Bbc {{ agent_install_dir | default('/home/frappe/agent') }}/nginx/monitoring.htpasswd frappe {{ monitoring_password }}"
+  become: yes
+  become_user: frappe
+

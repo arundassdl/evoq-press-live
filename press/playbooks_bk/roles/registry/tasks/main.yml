@@ -1,0 +1,74 @@
+---
+- name: Create Registry Directory
+  become: yes
+  become_user: frappe
+  file:
+    dest: /home/frappe/registry
+    state: directory
+
+- name: Create Registry Data Directory
+  become: yes
+  become_user: frappe
+  file:
+    dest: /home/frappe/registry/data
+    state: directory
+
+- name: Stop and Remove old Docker Registry UI Container
+  shell: docker stop registry-ui; docker rm registry-ui
+  ignore_errors: true
+
+- name: Stop and Remove old Docker Registry Container
+  shell: docker stop registry; docker rm registry
+  ignore_errors: true
+
+- name: Copy registry config file
+  template:
+    src: files/registry-config.yml.j2
+    dest: /home/frappe/registry/config.yml
+    owner: frappe
+    group: frappe
+    mode: '0644'
+  vars:
+    is_mirror: "{{ is_mirror }}"
+    username: "{{ registry_username }}"
+    password: "{{ registry_password }}"
+    proxy_pass: "{{ proxy_pass }}"
+
+
+- name: Copy docker compose file
+  template:
+    src: files/registry-docker-compose.yml.j2
+    dest: /home/frappe/registry/docker-compose.yml
+    owner: frappe
+    group: frappe
+    mode: '0644'
+  vars:
+    docker_data_mountpoint: "{{ docker_data_mountpoint }}"
+    container_registry_config_path: "{{ container_registry_config_path }}"
+    is_mirror: "{{ is_mirror }}"
+    registry_url: "{{ registry_url }}"
+    access_key: "{{ access_key }}"
+    secret_key: "{{ secret_key }}"
+    region_endpoint: "{{ region_endpoint }}"
+    region: "{{ region }}"
+    bucket_name: "{{ bucket_name }}"
+
+
+- name: Start docker registry with docker compose
+  command: docker compose up -d
+  args:
+    chdir: /home/frappe/registry
+
+- name: Setup Registry Authentication
+  become: yes
+  become_user: frappe
+  command: 'htpasswd -Bbc registry.htpasswd {{ registry_username }} {{ registry_password }}'
+  args:
+    chdir: /home/frappe/registry
+
+- name: Setup NGINX for Registry
+  become: yes
+  become_user: frappe
+  command: /home/frappe/agent/env/bin/agent setup registry
+  args:
+    chdir: /home/frappe/agent

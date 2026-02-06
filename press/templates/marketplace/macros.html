@@ -1,0 +1,94 @@
+{% macro button(label, link, kind='default', as='a', type='button') %}
+{%- set classes = resolve_class([
+'inline-flex items-center justify-center px-3 py-1 text-base leading-5 rounded-md focus:outline-none',
+{
+'text-white bg-gray-900 hover:bg-gray-800 active:bg-gray-700 focus-visible:ring focus-visible:ring-gray-400': kind ==
+'primary',
+'text-gray-800 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 focus-visible:ring focus-visible:ring-gray-400': kind ==
+'default',
+}
+]) -%}
+{%- if as == 'a' -%}
+<a class="{{ classes }}" href="{{ link }}">{{ label }}</a>
+{%- else -%}
+<button class="{{ classes }}" type="{{ type }}">{{ label }}</button>
+{%- endif -%}
+{% endmacro %}
+
+{% macro link(label, url, class, blank=False) %}
+<a class="text-gray-600 hover:text-gray-800 {{ resolve_class(class) }}" href="{{ url | abs_url }}" {% if blank %}
+	target="_blank" {% endif %}>{{ label }}</a>
+{% endmacro %}
+
+{% macro badge_gray(title) %}
+<span class="inline-block px-3 py-1 text-xs text-gray-800 font-semibold rounded-md cursor-default bg-gray-300">
+	{{ title }}
+</span>
+{% endmacro %}
+
+{% macro badge_green(title) %}
+<span class="inline-block px-3 py-1 text-sm text-green-800 rounded-md cursor-default bg-green-200">
+	{{ title }}
+</span>
+{% endmacro %}
+
+{% macro breadcrumbs(items) %}
+<nav class="flex items-center text-sm font-medium leading-5">
+	{%- for item in items -%}
+	<a href="{{ item.url }}"
+		class="text-base {% if not loop.last %} text-gray-900 {% else %} text-gray-500 {% endif %} {% if not loop.last %} hover:text-gray-600 {% endif %} focus:outline-none focus:underline">
+		{{ item.label }}
+	</a>
+
+	{%- if not loop.last -%}
+	<svg class="flex-shrink-0 mx-2" xmlns="http://www.w3.org/2000/svg" width="6" height="8" viewBox="0 0 6 8"
+		fill="none">
+		<path d="M1.25 7.5L4.75 4L1.25 0.5" stroke="#1F272E" stroke-linecap="round" stroke-linejoin="round" />
+	</svg>
+	{%- endif -%}
+	{%- endfor -%}
+</nav>
+{% endmacro %}
+
+{% macro form(fields, action='') %}
+<form action="/api/method/{{ action }}" method="POST">
+	<section class="space-y-4">
+		{%- for df in fields -%}
+		<p class="space-y-2">
+			<label class="block text-base" for="{{ df.fieldname }}">{{ df.label }}</label>
+			{%- if df.fieldtype == 'Select' -%}
+			<select class="w-full form-select" name="{{ df.fieldname }}" id="{{ df.fieldname }}">
+				{%- for option in df.options or [] -%}
+				<option value="{{ option.value }}">{{ option.label }}</option>
+				{%- endfor -%}
+			</select>
+			{%- else -%}
+			<input type="text" id="{{ df.fieldname }}" class="w-full form-input" name="{{ df.fieldname }}">
+			{%- endif -%}
+		</p>
+		{%- endfor -%}
+		<input type="text" name="csrf_token" value="{{ frappe.session.csrf_token }}" hidden>
+	</section>
+	<p class="mt-8 text-center">
+		{{ button('Submit', as='button', type='submit', kind='primary') }}
+	</p>
+</form>
+{% endmacro %}
+
+
+{% macro five_star_rating(rating=0.0) %}
+<div class="flex flex-row space-x-1">
+	{% for i in range(1, 6) %}
+	<!-- Star Icon -->
+	<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none">
+		<path
+			d="M6.56866 0.735724C6.76184 0.406233 7.23816 0.406233 7.43134 0.735725L9.16063 3.68535C9.23112 3.80559 9.34861 3.89095 9.48475 3.92084L12.8244 4.65401C13.1974 4.73591 13.3446 5.18892 13.091 5.47446L10.8201 8.03059C10.7275 8.1348 10.6826 8.27291 10.6963 8.41162L11.031 11.8144C11.0684 12.1945 10.683 12.4745 10.3331 12.3214L7.20032 10.9516C7.07261 10.8958 6.92739 10.8958 6.79968 10.9516L3.66691 12.3214C3.31696 12.4745 2.9316 12.1945 2.96899 11.8144L3.30371 8.41162C3.31736 8.27291 3.27248 8.1348 3.17991 8.03059L0.90903 5.47446C0.655358 5.18892 0.802551 4.73591 1.17561 4.65401L4.51525 3.92084C4.65139 3.89095 4.76888 3.80559 4.83937 3.68535L6.56866 0.735724Z"
+			fill="{{ '#C0C6CC' if i > rating else '#ECAC4B' }}" />
+	</svg>
+	{% endfor %}
+</div>
+{% endmacro %}
+
+{%- macro approved_badge() -%}
+<svg height="14" viewBox="0 0 512 512" width="14" xmlns="http://www.w3.org/2000/svg"><path d="m512 268c0 17.9-4.3 34.5-12.9 49.7s-20.1 27.1-34.6 35.4c.4 2.7.6 6.9.6 12.6 0 27.1-9.1 50.1-27.1 69.1-18.1 19.1-39.9 28.6-65.4 28.6-11.4 0-22.3-2.1-32.6-6.3-8 16.4-19.5 29.6-34.6 39.7-15 10.2-31.5 15.2-49.4 15.2-18.3 0-34.9-4.9-49.7-14.9-14.9-9.9-26.3-23.2-34.3-40-10.3 4.2-21.1 6.3-32.6 6.3-25.5 0-47.4-9.5-65.7-28.6-18.3-19-27.4-42.1-27.4-69.1 0-3 .4-7.2 1.1-12.6-14.5-8.4-26-20.2-34.6-35.4-8.5-15.2-12.8-31.8-12.8-49.7 0-19 4.8-36.5 14.3-52.3s22.3-27.5 38.3-35.1c-4.2-11.4-6.3-22.9-6.3-34.3 0-27 9.1-50.1 27.4-69.1s40.2-28.6 65.7-28.6c11.4 0 22.3 2.1 32.6 6.3 8-16.4 19.5-29.6 34.6-39.7 15-10.1 31.5-15.2 49.4-15.2s34.4 5.1 49.4 15.1c15 10.1 26.6 23.3 34.6 39.7 10.3-4.2 21.1-6.3 32.6-6.3 25.5 0 47.3 9.5 65.4 28.6s27.1 42.1 27.1 69.1c0 12.6-1.9 24-5.7 34.3 16 7.6 28.8 19.3 38.3 35.1 9.5 15.9 14.3 33.4 14.3 52.4zm-266.9 77.1 105.7-158.3c2.7-4.2 3.5-8.8 2.6-13.7-1-4.9-3.5-8.8-7.7-11.4-4.2-2.7-8.8-3.6-13.7-2.9-5 .8-9 3.2-12 7.4l-93.1 140-42.9-42.8c-3.8-3.8-8.2-5.6-13.1-5.4-5 .2-9.3 2-13.1 5.4-3.4 3.4-5.1 7.7-5.1 12.9 0 5.1 1.7 9.4 5.1 12.9l58.9 58.9 2.9 2.3c3.4 2.3 6.9 3.4 10.3 3.4 6.7-.1 11.8-2.9 15.2-8.7z" fill="#171717"/></svg>
+{%- endmacro -%}

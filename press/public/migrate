@@ -1,0 +1,52 @@
+#!./env/bin/python
+# Fallback Script to run the easy migrate script in place of `bench migrate-to`
+# This file was originally hosted on Frappe Cloud. For more information, contact us at frappecloud.com
+# Copyright (c) 2020, Frappe Technologies Pvt. Ltd.
+
+import os
+import click
+import requests
+from html2text import html2text
+
+def get_remote_script(remote_site):
+	print("Retrieving Site Migrator...")
+	request_url = f"https://{remote_site}/api/method/press.api.script"
+	request = requests.get(request_url)
+
+	if request.status_code / 100 != 2:
+		print(f"Request exited with Status Code: {request.status_code}\nPayload: {html2text(request.text)}")
+		click.secho(
+			"Some errors occurred while recovering the migration script. Please contact us @ Frappe Cloud if this issue persists",
+			fg="yellow",
+		)
+		return
+
+	return request.json()["message"]
+
+
+def frappecloud_migrator():
+	remote_site_name = "frappecloud.com"
+	script_contents = get_remote_script(remote_site=remote_site_name)
+	import os
+	import sys
+	import tempfile
+
+	py = sys.executable
+	script = tempfile.NamedTemporaryFile(mode="w")
+	script.write(script_contents)
+	script.flush()
+	print(f"Site Migrator stored at {script.name}")
+	os.execv(py, [py, script.name])
+
+	
+
+if __name__ == "__main__":
+	os.chdir("sites")
+	try:
+		frappecloud_migrator()
+	except (KeyboardInterrupt, click.exceptions.Abort):
+		print("\nExitting...")
+	except Exception:
+		from frappe.utils import get_traceback
+
+		print(get_traceback())

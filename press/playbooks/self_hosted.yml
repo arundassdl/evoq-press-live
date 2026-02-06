@@ -1,0 +1,27 @@
+---
+- hosts: all
+  gather_facts: yes            # ensure facts are gathered
+  become: yes
+
+  pre_tasks:
+    - name: Auto-detect private_ip if not provided
+      set_fact:
+       private_ip: "{{ private_ip | default(ansible_default_ipv4.address | default('172.17.0.1')) }}"
+- name: Setup Self Hosted Server
+  hosts: all
+  become: yes
+  become_user: root
+  gather_facts: yes
+  roles:
+    - role: essentials
+    - role: user
+    - role: nginx
+    - role: agent
+    - role: bench
+    - role: docker
+    - role: node_exporter
+    - role: cadvisor
+    - role: statsd_exporter
+    - role: filebeat
+    - role: gpg_config
+    - role: user_ssh_certificate

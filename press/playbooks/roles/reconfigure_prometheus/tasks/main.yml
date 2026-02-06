@@ -1,0 +1,50 @@
+---
+- name: Configure Prometheus Service Discovery for Press Server
+  become: yes
+  become_user: frappe
+  template:
+    src: ../../prometheus/templates/press.yml.j2
+    dest: /home/frappe/prometheus/file_sd/press.yml
+    force: true
+    mode: 0600
+
+- name: Set JSON Variables
+  set_fact:
+    registries: "{{ registries_json | from_json }}"
+    clusters: "{{ clusters_json | from_json }}"
+    log_servers: "{{ log_servers_json | from_json }}"
+
+- name: Configure Prometheus Service Discovery for Registries
+  become: yes
+  become_user: frappe
+  template:
+    src: ../../prometheus/templates/registry.yml
+    dest: /home/frappe/prometheus/file_sd/registry.{{ item.name }}.yml
+    force: true
+    mode: 0600
+  loop: "{{ registries }}"
+
+- name: Configure Prometheus Service Discovery for Log Servers
+  become: yes
+  become_user: frappe
+  template:
+    src: ../../prometheus/templates/log.yml
+    dest: /home/frappe/prometheus/file_sd/log.{{ item.name }}.yml
+    force: true
+    mode: 0600
+  loop: "{{ log_servers }}"
+
+- name: Configure Prometheus
+  become: yes
+  become_user: frappe
+  template:
+    src: ../../prometheus/templates/prometheus.yml
+    dest: /home/frappe/prometheus/prometheus.yml
+    force: true
+    mode: 0600
+    validate: "/home/frappe/prometheus/promtool check config %s"
+
+- name: Reload Prometheus Service
+  systemd:
+    name: prometheus
+    state: reloaded

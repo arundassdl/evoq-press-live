@@ -1,0 +1,152 @@
+[pre_model_sync]
+press.patches.v0_0_1.site_history_to_site_activity
+press.patches.v0_0_1.user_account_to_team #6
+press.patches.v0_0_1.rename_transaction_currency_to_currency
+press.patches.v0_0_1.create_site_plan_change_log
+execute:frappe.reload_doc('press', 'doctype', 'team')
+execute:frappe.db.set_value('Team', {'enabled': 1}, {'free_credits_allocated': 1}, update_modified=False)
+press.patches.v0_0_1.update_proxy_for_suspended_and_inactive_sites
+press.patches.v0_0_1.rename_site_backup_fields # 2020-05-22
+press.patches.v0_0_1.rename_archived_sites
+press.patches.v0_0_1.create_backup_uploads_folder
+press.patches.v0_0_1.mark_deployed_app_releases_as_approved_and_deployable # 2020-22-06
+press.patches.v0_0_1.set_repository_in_frappe_app # 2020-22-06
+press.patches.v0_0_1.make_apps_in_public_release_group_public
+press.patches.v0_0_1.set_host_name_for_sites_with_domains
+press.patches.v0_0_1.set_rate_limit_config_based_on_plan
+press.patches.v0_0_1.enable_partner_privileges
+press.patches.v0_0_1.set_remote_file_location
+press.patches.v0_0_1.track_offsite_backups_via_remote_files
+press.patches.v0_0_1.move_domains_from_archived_to_active_sites
+press.patches.v0_0_1.remove_domains_linked_to_archived_sites
+press.patches.v0_0_1.delete_logs_from_archived_sites
+press.patches.v0_0_1.add_domains_to_site_config
+execute:frappe.reload_doc('press', 'doctype', 'Remote File')
+# press.patches.v0_0_1.add_site_to_remote_file # 2020-11-12 run via run-patch command in active site state
+press.patches.v0_0_1.new_onboarding
+press.patches.v0_0_1.remove_obsolete_doctypes
+press.patches.v0_0_1.make_default_site_domain
+press.patches.v0_0_1.update_site_config_doc
+press.patches.v0_0_1.create_certificate_authorities
+press.patches.v0_0_1.rename_columns_in_tls_certificate
+press.patches.v0_0_1.site_usage_convert_history
+press.patches.v0_0_1.set_document_type_in_plan
+# Billing Refactor 3
+# these will be run separately with the execute command, to avoid downtime
+# press.patches.v0_0_1.create_site_subscriptions
+# press.patches.v0_0_1.ple_to_usage_record
+# press.patches.v0_0_1.patch_invoice
+# press.patches.v0_0_1.create_balance_transactions_from_stripe
+# Backups "refactor"
+# press.patches.v0_0_1.update_backups_availability
+# Update transaction details in paid invoices
+# press.press.doctype.invoice.patches.set_transaction_details
+press.patches.v0_0_1.set_billing_name_for_teams
+# App Subsystem Refactor
+press.patches.v0_0_1.rename_frappe_app_to_app
+press.patches.v0_0_1.rename_release_group_frappe_app_to_release_group_app
+press.patches.v0_0_1.set_hostname_in_server
+press.patches.v0_0_1.set_domain_in_site
+press.patches.v0_0_1.breakdown_site_usage_into_multiple_fields
+press.patches.v0_0_1.create_default_cluster
+press.patches.v0_0_1.set_app_title_from_custom_field
+press.patches.v0_0_1.set_release_group_version_and_title_from_custom_field
+press.patches.v0_0_1.rename_installed_app_to_bench_app
+press.patches.v0_0_1.rename_deploy_candidate_app_release_to_deploy_candidate_app
+press.patches.v0_0_1.create_app_source_from_app
+press.patches.v0_0_1.rename_release_groups
+press.patches.v0_0_1.create_app_release_difference_from_deploy_candidate_difference
+press.patches.v0_0_1.truncate_server_status_table
+press.patches.v0_0_1.set_marketplace_app_app_field_from_name
+press.patches.v0_0_1.rename_workers_to_background_workers
+press.patches.v0_0_1.set_release_in_bench_app
+press.patches.v0_0_1.set_app_title_in_deploy_candidate_app
+press.patches.v0_0_1.set_release_group_in_site
+press.patches.v0_0_1.set_public_field_in_app_release_based_on_app_source_public
+press.patches.v0_0_1.set_team_field_for_permission_checks
+press.patches.v0_0_1.set_team_field_in_tls_certificate_based_on_domain_team
+press.patches.v0_0_1.create_root_domain_from_press_settings
+press.patches.v0_0_1.set_cluster_in_press_settings
+press.patches.v0_0_1.remove_period_from_plan
+press.patches.v0_0_1.add_site_index_to_site_migration
+press.patches.v0_0_1.set_dependencies_in_release_group
+press.patches.v0_0_1.set_monitoring_password_in_cluster
+press.patches.v0_0_1.add_domains_in_site_config_preview
+press.patches.v0_0_1.use_private_ip_for_upstreams
+press.press.doctype.site.patches.set_plan_in_site
+press.press.doctype.app_release.patches.set_status_to_draft
+press.patches.v0_0_4.remove_legacy_billing_doctypes
+# press.press.doctype.invoice.patches.set_free_credits # 2021-08-11 run via run-patch command
+press.press.doctype.team.patches.set_payment_mode
+press.patches.v0_0_1.add_team_name_as_default_notify_email
+press.press.doctype.team.patches.set_referrer_id
+press.press.doctype.team.patches.set_partner_email
+press.press.doctype.proxy_server.patches.generate_proxysql_monitor_password
+press.press.doctype.virtual_machine.patches.populate_volumes_table
+press.press.doctype.release_group.patches.set_bench_dependency_in_release_group
+press.press.doctype.press_settings.patches.move_stripe_credentials_to_press_settings
+press.patches.v0_0_4.disable_subscriptions_for_inactive_sites
+press.press.doctype.virtual_machine.patches.set_naming_fields
+press.press.doctype.virtual_machine.patches.set_virtual_machine_naming_series
+press.press.doctype.virtual_machine.patches.rename_virtual_machines
+press.press.doctype.user_ssh_key.patches.set_existing_keys_as_default
+press.press.doctype.press_settings.patches.set_press_monitoring_password
+press.press.doctype.deploy_candidate_app.patches.set_app_name_to_app
+press.press.doctype.site.patches.set_database_access_credentials
+press.press.doctype.team.patches.set_team_title
+press.press.doctype.telegram_group.patches.create_groups_from_press_settings
+press.press.doctype.app_release.patches.set_clone_directory
+press.press.doctype.database_server_mariadb_variable.patches.add_unique_constraint
+press.press.doctype.release_group.patches.sync_common_site_config
+execute:frappe.delete_doc('Central Site Migration')
+execute:frappe.delete_doc('Central Server')
+execute:frappe.delete_doc('Feature Traction')
+press.patches.v0_7_0.set_hostname_abbreviation
+press.press.doctype.cluster.patches.rename_aws_fields
+press.press.doctype.virtual_machine.patches.rename_aws_fields
+press.press.doctype.virtual_machine_image.patches.rename_aws_fields
+press.press.doctype.virtual_disk_snapshot.patches.rename_aws_fields
+press.press.doctype.virtual_machine_volume.patches.rename_aws_fields
+press.patches.v0_7_0.convert_marketplace_description_to_html
+press.press.doctype.team.patches.remove_invalid_email_addresses
+press.saas.doctype.product_trial.patches.rename_saas_product_doctypes_to_product_trial
+
+[post_model_sync]
+press.patches.v0_7_0.rename_plan_to_site_plan
+press.patches.v0_7_0.migrate_fields_from_plans_to_server_and_marketplace
+press.patches.v0_7_0.set_password_config_type
+press.press.doctype.agent_job.patches.update_status_for_undelivered_jobs #2024-04-23
+press.press.doctype.press_role.patches.migrate_permissions
+press.press.doctype.press_role.patches.change_fields_from_enable_to_allow
+press.press.doctype.stripe_webhook_log.patches.add_payment_method_for_failed_events
+press.patches.v0_7_0.add_team_field_for_site_related_doctypes
+press.patches.v0_7_0.add_team_field_for_site_backups_archived
+press.press.doctype.server_storage_plan.patches.add_subscription_for_servers_with_additional_disk
+press.press.doctype.press_notification.patches.link_reference_doctype_to_notifications
+press.press.doctype.site.patches.set_plan_limit_in_site_config
+press.press.doctype.payout_order.patches.change_fields_from_recipient_to_team
+press.press.doctype.payout_order.patches.compute_total_amount
+press.press.doctype.marketplace_app.patches.change_field_from_first_site_creation_to_site_creation
+press.press.doctype.marketplace_app.patches.convert_images_to_webp
+press.marketplace.doctype.app_user_review.patches.add_rating_values_to_apps
+press.press.doctype.site.patches.set_status_wizard_check_next_retry_datetime_in_site
+press.patches.v0_7_0.update_enable_performance_tuning
+press.press.doctype.server.patches.set_plan_and_subscription
+press.patches.v0_7_0.move_site_db_access_users_to_site_db_perm_manager
+press.press.doctype.drip_email.patches.set_correct_field_for_html
+press.patches.v0_7_0.set_label_for_site_database_user
+press.press.doctype.press_settings.patches.set_redis_cache_size
+press.press.doctype.virtual_machine.patches.set_root_disk_size
+press.press.doctype.virtual_machine_image.patches.set_root_size
+press.patches.v0_7_0.fix_team_for_tls_certificates
+press.press.doctype.press_settings.patches.set_minimum_rebuild_memory
+press.press.doctype.app_patch.patches.set_archived_patch_on_archived_bench
+press.patches.v0_7_0.add_site_backup_times_for_configured_ones
+press.patches.v0_7_0.rename_site_skip_scheduled_backups_field
+press.press.doctype.drip_email.patches.migrate_to_product_trial_field
+press.press.doctype.mpesa_payment_record.patches.add_unique_constraint
+press.press.doctype.user_2fa.patches.generate_recovery_codes
+press.press.doctype.account_request.patches.generate_expiration_time_for_request_key
+press.saas.doctype.product_trial_request.patches.set_subscription_created_flag
+press.patches.v0_8_0.move_notify_billing_email_of_team_to_child_doc
+press.patches.v0_8_0.clear_alertmanager_webhook_log

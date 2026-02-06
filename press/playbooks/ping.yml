@@ -1,0 +1,9 @@
+---
+- name: Ping Server
+  hosts: all
+  become: yes
+  become_user: frappe
+  gather_facts: no
+
+  roles:
+    - role: ping

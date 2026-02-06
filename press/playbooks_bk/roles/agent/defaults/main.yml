@@ -1,0 +1,4 @@
+agent_repository_url: "https://github.com/frappe/agent.git"
+agent_branch: "master"
+workers: 2
+

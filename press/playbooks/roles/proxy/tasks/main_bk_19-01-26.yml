@@ -1,0 +1,36 @@
+---
+- name: Create Agent NGINX Hosts Directory
+  become: yes
+  become_user: frappe
+  file:
+    path: /home/frappe/agent/nginx/hosts
+    state: directory
+
+- name: Create Agent NGINX Upstream Directory
+  become: yes
+  become_user: frappe
+  file:
+    path: /home/frappe/agent/nginx/upstreams
+    state: directory
+
+- name: Create NGINX Proxy Configuration File
+  become: yes
+  become_user: frappe
+  file:
+    path: /home/frappe/agent/nginx/proxy.conf
+    state: touch
+
+- name: Symlink NGINX Proxy Configuration File
+  file:
+    src: /home/frappe/agent/nginx/proxy.conf
+    dest: /etc/nginx/conf.d/proxy.conf
+    state: link
+    force: yes
+    follow: no
+
+- name: Setup Agent Proxy
+  become: yes
+  become_user: frappe
+  command: '/home/frappe/agent/env/bin/agent setup proxy --domain {{ domain }} --press-url {{ press_url }}'
+  args:
+    chdir: /home/frappe/agent

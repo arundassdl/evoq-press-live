@@ -1,0 +1,105 @@
+---
+- name: Update APT Cache
+  apt:
+    update_cache: yes
+  ignore_errors: yes
+
+- name: Install Filebeat Dependencies
+  apt:
+    state: present
+    pkg:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+  register: result
+  until: result.failed == false
+  retries: 5
+  delay: 120
+
+- name: Add Elasticsearch Repository Key
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Add Elasticsearch Repository
+  apt_repository:
+    repo: deb https://artifacts.elastic.co/packages/7.x/apt stable main
+    state: present
+
+- name: Remove new Elasticsearch Repository
+  apt_repository:
+    repo: deb https://artifacts.elastic.co/packages/8.x/apt stable main
+    state: absent
+    update_cache: true
+
+- name: Uninstall newer version of Filebeat
+  apt:
+    name: filebeat
+    state: absent
+  register: result
+  until: result.failed == false
+  retries: 5
+  delay: 120
+
+- name: Install Filebeat
+  apt:
+    name: filebeat
+    state: latest
+  register: result
+  until: result.failed == false
+  retries: 5
+  delay: 120
+
+- name: Setup Filebeat
+  template:
+    src: filebeat.yml
+    dest: /etc/filebeat/filebeat.yml
+
+- name: Create ProxySQL Module Directory
+  file:
+    path: /usr/share/filebeat/module/proxysql
+    state: directory
+    owner: root
+
+- name: Setup ProxySQL Module
+  synchronize:
+    src: 'roles/filebeat/module/proxysql/'
+    dest: /usr/share/filebeat/module/proxysql/
+    recursive: yes
+    archive: false
+    use_ssh_args: yes
+
+- name: Setup Filebeat Modules
+  template:
+    src: 'modules.d/{{ item }}.yml'
+    dest: '/etc/filebeat/modules.d/{{ item }}.yml'
+  loop:
+    - 'mysql'
+    - 'system'
+    - 'nginx'
+    - 'proxysql'
+
+- name: Enable Filebeat Modules
+  command: filebeat modules enable nginx mysql system proxysql
+
+- name: Create Filebeat Modules Directory
+  file:
+    dest: /etc/filebeat/inputs.d
+    state: directory
+
+- name: Setup Filebeat Inputs
+  template:
+    src: 'inputs.d/{{ item }}.yml'
+    dest: '/etc/filebeat/inputs.d/{{ item }}.yml'
+  loop:
+    - 'all'
+    - 'containers'
+    - 'monitor'
+
+- name: Restart Filebeat Daemon
+  systemd:
+    name: filebeat
+    daemon_reload: true
+    enabled: yes
+    state: restarted

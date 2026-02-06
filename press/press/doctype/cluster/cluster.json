@@ -1,0 +1,366 @@
+{
+ "actions": [],
+ "autoname": "Prompt",
+ "creation": "2022-01-28 20:07:41.240327",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "description",
+  "column_break_2",
+  "status",
+  "public",
+  "beta",
+  "hybrid",
+  "has_arm_support",
+  "column_break_fsht",
+  "monitoring_password",
+  "image",
+  "billing_section",
+  "team",
+  "provisioning_section",
+  "cloud_provider",
+  "region",
+  "column_break_5",
+  "ssh_key",
+  "availability_zone",
+  "aws_section",
+  "aws_access_key_id",
+  "column_break_qpia",
+  "aws_secret_access_key",
+  "oci_section",
+  "oci_user",
+  "oci_public_key",
+  "column_break_bpar",
+  "oci_tenancy",
+  "oci_private_key",
+  "networking_section",
+  "cidr_block",
+  "subnet_cidr_block",
+  "column_break_12",
+  "vpc_id",
+  "subnet_id",
+  "security_group_id",
+  "proxy_security_group_id",
+  "network_acl_id",
+  "route_table_id",
+  "docker_section",
+  "repository"
+ ],
+ "fields": [
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description"
+  },
+  {
+   "fieldname": "monitoring_password",
+   "fieldtype": "Password",
+   "label": "Monitoring Password",
+   "set_only_once": 1
+  },
+  {
+   "default": "Generic",
+   "fieldname": "cloud_provider",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Cloud Provider",
+   "options": "AWS EC2\nGeneric\nOCI\nHetzner",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "depends_on": "eval:doc.cloud_provider === \"AWS EC2\"",
+   "fieldname": "aws_access_key_id",
+   "fieldtype": "Data",
+   "label": "AWS Access Key ID",
+   "set_only_once": 1
+  },
+  {
+   "depends_on": "eval:doc.cloud_provider === \"AWS EC2\"",
+   "fieldname": "aws_secret_access_key",
+   "fieldtype": "Password",
+   "label": "AWS Secret Access Key",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "provisioning_section",
+   "fieldtype": "Section Break",
+   "label": "Provisioning"
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.cloud_provider !== \"Generic\"",
+   "fieldname": "region",
+   "fieldtype": "Link",
+   "label": "Region",
+   "mandatory_depends_on": "eval:doc.cloud_provider !== \"Generic\"",
+   "options": "Cloud Region",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cidr_block",
+   "fieldtype": "Data",
+   "label": "CIDR Block",
+   "read_only": 1
+  },
+  {
+   "fieldname": "networking_section",
+   "fieldtype": "Section Break",
+   "label": "Networking"
+  },
+  {
+   "fieldname": "column_break_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subnet_cidr_block",
+   "fieldtype": "Data",
+   "label": "Subnet CIDR Block",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.cloud_provider !== \"Generic\"",
+   "fieldname": "availability_zone",
+   "fieldtype": "Data",
+   "label": "Availability Zone",
+   "mandatory_depends_on": "eval:doc.cloud_provider === \"AWS EC2\"",
+   "set_only_once": 1
+  },
+  {
+   "depends_on": "eval:doc.cloud_provider !== \"Generic\"",
+   "fieldname": "ssh_key",
+   "fieldtype": "Link",
+   "label": "SSH Key",
+   "mandatory_depends_on": "eval:doc.cloud_provider !== \"Generic\"",
+   "options": "SSH Key",
+   "set_only_once": 1
+  },
+  {
+   "default": "0",
+   "description": "Show in New Site/New Bench selection",
+   "fieldname": "public",
+   "fieldtype": "Check",
+   "label": "Public"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "label": "Image"
+  },
+  {
+   "fieldname": "column_break_fsht",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Active\nCopying Images\nArchived"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "oci_section",
+   "fieldtype": "Section Break",
+   "label": "OCI"
+  },
+  {
+   "fieldname": "column_break_bpar",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "aws_section",
+   "fieldtype": "Section Break",
+   "label": "AWS"
+  },
+  {
+   "fieldname": "column_break_qpia",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.cloud_provider === \"OCI\"",
+   "fieldname": "oci_user",
+   "fieldtype": "Data",
+   "label": "OCI User",
+   "mandatory_depends_on": "eval:doc.cloud_provider === \"OCI\"",
+   "set_only_once": 1
+  },
+  {
+   "depends_on": "eval:doc.cloud_provider === \"OCI\"",
+   "fieldname": "oci_public_key",
+   "fieldtype": "Code",
+   "label": " OCI Public Key",
+   "mandatory_depends_on": "eval:doc.cloud_provider === \"OCI\"",
+   "set_only_once": 1
+  },
+  {
+   "depends_on": "eval:doc.cloud_provider === \"OCI\"",
+   "fieldname": "oci_tenancy",
+   "fieldtype": "Data",
+   "label": "OCI Tenancy",
+   "mandatory_depends_on": "eval:doc.cloud_provider === \"OCI\"",
+   "set_only_once": 1
+  },
+  {
+   "depends_on": "eval:doc.cloud_provider === \"OCI\"",
+   "fieldname": "oci_private_key",
+   "fieldtype": "Password",
+   "label": "OCI Private Key",
+   "length": 4096,
+   "mandatory_depends_on": "eval:doc.cloud_provider === \"OCI\"",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "vpc_id",
+   "fieldtype": "Data",
+   "label": "VPC ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "subnet_id",
+   "fieldtype": "Data",
+   "label": "Subnet ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proxy_security_group_id",
+   "fieldtype": "Data",
+   "label": "Proxy Security Group ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "security_group_id",
+   "fieldtype": "Data",
+   "label": "Security Group ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "route_table_id",
+   "fieldtype": "Data",
+   "label": "Route Table ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "network_acl_id",
+   "fieldtype": "Data",
+   "label": "Network ACL ID",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "beta",
+   "fieldtype": "Check",
+   "label": "Beta"
+  },
+  {
+   "default": "0",
+   "fieldname": "hybrid",
+   "fieldtype": "Check",
+   "label": "Hybrid"
+  },
+  {
+   "fieldname": "billing_section",
+   "fieldtype": "Section Break",
+   "label": "Billing"
+  },
+  {
+   "fieldname": "team",
+   "fieldtype": "Link",
+   "label": "Team",
+   "options": "Team"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_arm_support",
+   "fieldtype": "Check",
+   "label": "Has ARM Support"
+  },
+  {
+   "fieldname": "docker_section",
+   "fieldtype": "Section Break",
+   "label": "Docker"
+  },
+  {
+   "fieldname": "repository",
+   "fieldtype": "Data",
+   "label": "Repository"
+  }
+ ],
+ "image_field": "image",
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "group": "Servers",
+   "link_doctype": "Server",
+   "link_fieldname": "cluster"
+  },
+  {
+   "group": "Servers",
+   "link_doctype": "Database Server",
+   "link_fieldname": "cluster"
+  },
+  {
+   "group": "Servers",
+   "link_doctype": "Proxy Server",
+   "link_fieldname": "cluster"
+  },
+  {
+   "group": "Servers",
+   "link_doctype": "Log Server",
+   "link_fieldname": "cluster"
+  },
+  {
+   "group": "Servers",
+   "link_doctype": "Monitor Server",
+   "link_fieldname": "cluster"
+  },
+  {
+   "group": "Billing",
+   "link_doctype": "Subscription",
+   "link_fieldname": "document_name"
+  }
+ ],
+ "modified": "2025-09-19 16:27:01.820199",
+ "modified_by": "Administrator",
+ "module": "Press",
+ "name": "Cluster",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

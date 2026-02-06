@@ -1,0 +1,87 @@
+---
+- name: Remove Old Docker Packages
+  apt:
+    state: absent
+    force: yes
+    pkg:
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
+
+- name: Install Docker Dependencies
+  apt:
+    state: present
+    force: yes
+    pkg:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+
+- name: Add Docker Repository Key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+# This seems to be breaking on some servers
+- name: Add NGINX Repository Key
+  apt_key:
+    url: https://nginx.org/keys/nginx_signing.key
+    state: present
+
+- name: Add Docker Repository
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu focal stable
+    state: present
+    update_cache: true
+
+- name: Install Docker
+  apt:
+    name: docker-ce
+    state: present
+
+- name: Add Frappe User to docker Group
+  user:
+    name: frappe
+    groups:
+      - docker
+    append: true
+
+- name: Setup Docker Metrics
+  template:
+    src: daemon.json
+    dest: /etc/docker/daemon.json
+
+- name: Create Docker SystemD drop-in directory
+  file:
+    dest: /etc/systemd/system/docker.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: 0644
+    recurse: true
+
+- name: Set Docker to depend on Mounts
+  template:
+    src: mounts.conf
+    dest: /etc/systemd/system/docker.service.d/mounts.conf
+    owner: root
+    group: root
+    mode: 0644
+  when: docker_depends_on_mounts | default(false) | bool
+
+- name: Restart Docker Daemon
+  systemd:
+    daemon_reload: true
+    name: docker
+    state: restarted
+
+- name: Get Docker Info
+  command: docker info
+
+- name: Start Agent processes
+  supervisorctl:
+    name: "agent:"
+    state: started

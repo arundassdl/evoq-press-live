@@ -1,0 +1,40 @@
+---
+- name: Create Node Exporter Directory
+  file:
+    path: /opt/node_exporter
+    state: directory
+    mode: 0755
+
+- name: Set Architecture
+  set_fact:
+    arch: "{{'amd64' if (ansible_architecture == 'x86_64') else 'arm64'}}"
+
+- name: Download Node Exporter Archive
+  unarchive:
+    src: "https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-{{ arch }}.tar.gz"
+    dest: /tmp
+    remote_src: yes
+
+- name: Copy Node Exporter Binary
+  copy:
+    src: "/tmp/node_exporter-1.8.2.linux-{{ arch }}/node_exporter"
+    dest: /opt/node_exporter/node_exporter
+    remote_src: yes
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Create Node Exporter Systemd Service File
+  template:
+    src: node_exporter.service
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Restart Node Exporter Service
+  systemd:
+    daemon_reload: true
+    name: node_exporter
+    enabled: yes
+    state: restarted

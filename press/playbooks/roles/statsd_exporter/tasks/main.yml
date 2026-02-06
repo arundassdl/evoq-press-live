@@ -1,0 +1,48 @@
+---
+- name: Create StatsD Exporter Directory
+  file:
+    path: /opt/statsd_exporter
+    state: directory
+    mode: 0755
+
+- name: Set Architecture
+  set_fact:
+    arch: "{{'amd64' if (ansible_architecture == 'x86_64') else 'arm64'}}"
+
+- name: Download StatsD Exporter Archive
+  unarchive:
+    src: "https://github.com/prometheus/statsd_exporter/releases/download/v0.27.1/statsd_exporter-0.27.1.linux-{{ arch }}.tar.gz"
+    dest: /tmp
+    remote_src: yes
+
+- name: Copy StatsD Exporter Binary
+  copy:
+    src: "/tmp/statsd_exporter-0.27.1.linux-{{ arch }}/statsd_exporter"
+    dest: /opt/statsd_exporter/statsd_exporter
+    remote_src: yes
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Create StatsD Mapping Config File
+  template:
+    src: config.yml
+    dest: /opt/statsd_exporter/config.yml
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Create StatsD Exporter Systemd Service File
+  template:
+    src: statsd_exporter.service
+    dest: /etc/systemd/system/statsd_exporter.service
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Restart StatsD Exporter Service
+  systemd:
+    daemon_reload: true
+    name: statsd_exporter
+    enabled: yes
+    state: restarted

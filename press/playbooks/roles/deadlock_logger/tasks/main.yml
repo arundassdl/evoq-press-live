@@ -1,0 +1,45 @@
+---
+- name: Install Percona Toolkit
+  apt:
+    name: percona-toolkit
+    state: present
+
+- name: Copy Deadlock Logger Table Definition
+  template:
+    src: files/deadlock_logger.sql
+    dest: /tmp/deadlock_logger.sql
+
+- name: Create Deadlock Logger Table (with private IP)
+  mysql_db:
+    login_host: "{{ private_ip }}"
+    login_user: root
+    login_password: "{{ mariadb_root_password }}"
+    name: percona
+    state: import
+    target: /tmp/deadlock_logger.sql
+  when: private_ip | length > 0
+
+- name: Create Deadlock Logger Table (localhost)
+  mysql_db:
+    login_host: localhost
+    login_user: root
+    login_password: "{{ mariadb_root_password }}"
+    name: percona
+    state: import
+    target: /tmp/deadlock_logger.sql
+  when: private_ip | length == 0
+
+- name: Create Deadlock Logger Systemd Service File
+  template:
+    src: deadlock_logger.service
+    dest: /etc/systemd/system/deadlock_logger.service
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Restart Deadlock Logger Service
+  systemd:
+    daemon_reload: true
+    name: deadlock_logger
+    enabled: yes
+    state: restarted
