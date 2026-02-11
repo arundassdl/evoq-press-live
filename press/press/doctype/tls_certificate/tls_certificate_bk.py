@@ -575,7 +575,10 @@ class LetsEncrypt(BaseCA):
 		if self.dns_challenge_provider == "Hetzner":
 			auth_hook_path = self._create_hetzner_auth_hook_script()
 			cleanup_hook_path = self._create_hetzner_cleanup_hook_script()
-			self._run_certbot_with_hooks(self._certbot_command(), auth_hook_path, cleanup_hook_path)
+			# Create shell wrappers to force python interpreter
+			auth_wrapper = self._create_shell_wrapper("hetzner_auth_hook.sh", auth_hook_path)
+			cleanup_wrapper = self._create_shell_wrapper("hetzner_cleanup_hook.sh", cleanup_hook_path)
+			self._run_certbot_with_hooks(self._certbot_command(), auth_wrapper, cleanup_wrapper)
 			return
 
 		if self.wildcard:
@@ -798,11 +801,10 @@ except Exception as e:
 		environment = os.environ.copy()
 		environment["HETZNER_API_TOKEN"] = self.hetzner_dns_api_token # Pass encrypted token to sub-process
 		
-		full_command = f"{command} --manual-auth-hook {auth_hook_path} --manual-cleanup-hook {cleanup_hook_path}"
+		full_command = f"{command} --manual-auth-hook /usr/bin/python3 {auth_hook_path} --manual-cleanup-hook /usr/bin/python3 {cleanup_hook_path}"
 		try:
 			self.run(full_command, environment=environment)
 		finally:
 			# Clean up the temporary hook scripts
 			os.remove(auth_hook_path)
 			os.remove(cleanup_hook_path)
-
